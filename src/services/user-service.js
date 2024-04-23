@@ -1,6 +1,7 @@
 const { UserRepository } = require("../repositories");
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
+const { Auth } = require('../utils/common');
 
 const userRepo = new UserRepository();
 
@@ -26,6 +27,26 @@ async function create(data) {
   }
 }
 
+async function signin(data){
+  try {
+    const user = await userRepo.getUserByEmail(data.email);
+    if (!user) {
+      throw new AppError('No user found with the given email.', StatusCodes.NOT_FOUND);
+    }
+    const passwordMatch = Auth.checkPassword(data.password, user.password);
+    if (!passwordMatch) {
+      throw new AppError('Invalid password.', StatusCodes.BAD_REQUEST);
+    }
+    const jwt = Auth.createToken({id: user.id, email: user.email});
+    return jwt; // Return the JWT token if authentication is successful
+  } catch (error) {
+    if(error instanceof AppError) throw error;
+    throw new AppError('Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR);
+    throw error;
+  }
+}
+
 module.exports = {
-    create
+    create,
+    signin
 }
