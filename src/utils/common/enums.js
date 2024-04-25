@@ -1,5 +1,5 @@
 
-USER_ROLES_ENUMSE = {
+USER_ROLES_ENUMS = {
     ADMIN: 'admin',
     CUSTOMER: 'customer',
     FLIGHT_COMPANY: 'flight_company'
@@ -7,5 +7,5 @@ USER_ROLES_ENUMSE = {
 
 
 module.exports = {
-    USER_ROLES_ENUMSE
+    USER_ROLES_ENUMS
 }
