@@ -2,6 +2,8 @@ const { UserRepository, RoleRepository } = require("../repositories");
 const { StatusCodes } = require("http-status-codes");
 const AppError = require("../utils/errors/app-error");
 const { Auth, Enums } = require('../utils/common');
+const serverConfig = require("../config/server-config");
+const { ServerConfig } = require("../config");
 
 const userRepo = new UserRepository();
 const roleRepo = new RoleRepository();
@@ -70,13 +72,52 @@ async function isAuthenticated(token){
     if(error.name == 'TokenExpiredError') {
       throw new AppError('JWT Token Expired', StatusCodes.BAD_REQUEST);
     }
-    console.log(error);
-    throw new AppError('Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR);
+    throw new AppError('Missing JWT Token', StatusCodes.INTERNAL_SERVER_ERROR);
   }
+}
+
+async function addRoletoUser(data){
+  try {
+    const user = await userRepo.get(data.id);
+    if (!user) {
+      throw new AppError('No user found with the given id.', StatusCodes.NOT_FOUND);
+    }
+    const role = await roleRepo.getRoleByName(data.role);
+    if (!role) {
+      throw new AppError('No user found with the given name.', StatusCodes.NOT_FOUND);
+    }
+    user.addRole(role);
+    return user;
+    
+  } catch (error) {
+    if(error instanceof AppError) throw error;
+    throw new AppError('Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR);
+    throw error;
+  }
+}
+
+async function isAdmin(id){
+ try {
+  const user = await userRepo.get(id);
+    if (!user) {
+      throw new AppError('No user found with the given id.', StatusCodes.NOT_FOUND);
+    }
+    const adminrole = await roleRepo.getRoleByName(Enums.USER_ROLES_ENUMS.ADMIN);
+    if (!adminrole) {
+      throw new AppError('No user found with the given name.', StatusCodes.NOT_FOUND);
+    }
+    return user.hasRole(adminrole);
+ } catch (error) {
+  if(error instanceof AppError) throw error;
+  throw new AppError('Something went wrong', StatusCodes.INTERNAL_SERVER_ERROR);
+  throw error;
+ }
 }
 
 module.exports = {
     create,
     signin,
-    isAuthenticated
+    isAuthenticated,
+    addRoletoUser,
+    isAdmin
 }
